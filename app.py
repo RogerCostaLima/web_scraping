@@ -16,14 +16,17 @@ import os
 chrome_driver_path = "chromedriver.exe"
 
 # Função para iniciar o WebDriver
-def iniciar_driver(exibir_navegador=True):
+def iniciar_driver(exibir_navegador=False):
     service = Service(chrome_driver_path)
     options = Options()
     if not exibir_navegador:
         options.add_argument("--headless")  # Oculta o navegador
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    
+    # Use o ChromeDriverManager para buscar o ChromeDriver
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=options)
     return driver
 
 # Função para esperar um elemento
