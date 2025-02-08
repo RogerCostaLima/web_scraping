@@ -12,21 +12,23 @@ from datetime import datetime
 from geopy.geocoders import Nominatim
 import os
 
-# Caminho para o ChromeDriver
-chrome_driver_path = "chromedriver.exe"
-
 # Função para iniciar o WebDriver
 def iniciar_driver(exibir_navegador=False):
-    service = Service(chrome_driver_path)
     options = Options()
+    
+    # Configurações para o modo headless (sem exibir o navegador)
     if not exibir_navegador:
-        options.add_argument("--headless")  # Oculta o navegador
+        options.add_argument("--headless")  # Executa sem interface gráfica
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")  # Desabilita a GPU, se necessário
     
-    # Use o ChromeDriverManager para buscar o ChromeDriver
+    # Usando o ChromeDriverManager para garantir que o ChromeDriver correto seja utilizado
     service = Service(ChromeDriverManager().install())
+    
+    # Tenta inicializar o WebDriver do Chrome
     driver = webdriver.Chrome(service=service, options=options)
+    
     return driver
 
 # Função para esperar um elemento
@@ -169,10 +171,7 @@ modelo.to_excel(modelo_arquivo, index=False)
 # Upload de arquivo ou entrada manual
 arquivo = st.sidebar.file_uploader("Carregar arquivo XLSX", type="xlsx")
 
-#st.sidebar.header("Modelo do Arquivo XLSX")
-#st.sidebar.write("O arquivo XLSX deve ter as seguintes colunas: 'Localizacao' e 'Palavra_Chave'.")
 st.sidebar.write("Exemplo de formato do arquivo:")
-#st.sidebar.table(modelo)
 
 # Botão para download do arquivo
 with open(modelo_arquivo, "rb") as f:
