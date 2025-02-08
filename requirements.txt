@@ -4,7 +4,6 @@ selenium
 openpyxl
 pylance
 geopy
-os
 webdriver-manager
 
 
