@@ -4,3 +4,4 @@ selenium
 openpyxl
 geopy
 webdriver-manager
+playwright
