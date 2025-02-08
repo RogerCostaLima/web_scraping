@@ -15,15 +15,20 @@ import os
 # Função para iniciar o WebDriver com webdriver_manager
 def iniciar_driver(exibir_navegador=False):
     options = Options()
-    if not exibir_navegador:
-        options.add_argument("--headless")  # Oculta o navegador
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    
+    options.add_argument("--headless")  # Garante que o navegador rode em modo headless
+    options.add_argument("--disable-gpu")  # Para evitar falhas em ambientes sem GPU
+    options.add_argument("--no-sandbox")  # Necessário para ambientes Docker ou de nuvem
+    options.add_argument("--disable-dev-shm-usage")  # Impede erros de memória no container
+
     # Usar o ChromeDriverManager para instalar o ChromeDriver
     service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=options)
-    return driver
+    
+    try:
+        driver = webdriver.Chrome(service=service, options=options)
+        return driver
+    except Exception as e:
+        st.error(f"Erro ao inicializar o WebDriver: {e}")
+        return None
 
 # Função para esperar um elemento
 def esperar_elemento(driver, by_, value, timeout=10):
@@ -198,27 +203,30 @@ if st.button("Iniciar Busca"):
         driver = iniciar_driver(exibir_navegador)
         empresas = []
 
-        with st.spinner("Buscando empresas..."):
-            for local in localizacoes:
-                for palavra in palavras_chave:
-                    resultados = buscar_no_google_maps(driver, local.strip(), palavra.strip())
-                    empresas.extend(resultados)
+        if driver:
+            with st.spinner("Buscando empresas..."):
+                for local in localizacoes:
+                    for palavra in palavras_chave:
+                        resultados = buscar_no_google_maps(driver, local.strip(), palavra.strip())
+                        empresas.extend(resultados)
 
-        driver.quit()
+            driver.quit()
 
-        if empresas:
-            st.success(f"Busca concluída! {len(empresas)} resultados encontrados.")
-            df_resultados = pd.DataFrame(empresas)
-            st.dataframe(df_resultados)
+            if empresas:
+                st.success(f"Busca concluída! {len(empresas)} resultados encontrados.")
+                df_resultados = pd.DataFrame(empresas)
+                st.dataframe(df_resultados)
 
-            @st.cache_data
-            def gerar_xlsx(dataframe):
-                arquivo_saida = f"resultado/resultados_{datetime.now().strftime('%Y%m%d%H%M%S')}.xlsx"
-                dataframe.to_excel(arquivo_saida, index=False)
-                return arquivo_saida
+                @st.cache_data
+                def gerar_xlsx(dataframe):
+                    arquivo_saida = f"resultado/resultados_{datetime.now().strftime('%Y%m%d%H%M%S')}.xlsx"
+                    dataframe.to_excel(arquivo_saida, index=False)
+                    return arquivo_saida
 
-            arquivo_saida = gerar_xlsx(df_resultados)
-            with open(arquivo_saida, 'rb') as f:
-                st.download_button("Baixar Resultados", data=f, file_name=arquivo_saida, mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                arquivo_saida = gerar_xlsx(df_resultados)
+                with open(arquivo_saida, 'rb') as f:
+                    st.download_button("Baixar Resultados", data=f, file_name=arquivo_saida, mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            else:
+                st.warning("Nenhum resultado encontrado.")
         else:
-            st.warning("Nenhum resultado encontrado.")
+            st.error("Erro ao inicializar o driver. Verifique as configurações.")
