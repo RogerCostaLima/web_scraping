@@ -11,16 +11,34 @@ import time
 from datetime import datetime
 from geopy.geocoders import Nominatim
 import os
+import shutil
 
-# Função para iniciar o WebDriver com webdriver_manager
+# Função para instalar dependências no Streamlit Cloud
+def instalar_dependencias():
+    try:
+        # Instalar o Chromium e as dependências do Selenium
+        os.system("apt-get update")
+        os.system("apt-get install -y chromium-browser")
+        os.system("apt-get install -y libnss3 libgconf-2-4 libgdk-pixbuf2.0-0")
+        os.system("apt-get install -y fonts-liberation")
+    except Exception as e:
+        st.error(f"Erro ao instalar dependências: {e}")
+
+# Função para iniciar o WebDriver
 def iniciar_driver(exibir_navegador=False):
+    # Instalar dependências necessárias
+    instalar_dependencias()
+
     options = Options()
     options.add_argument("--headless")  # Garante que o navegador rode em modo headless
     options.add_argument("--disable-gpu")  # Para evitar falhas em ambientes sem GPU
     options.add_argument("--no-sandbox")  # Necessário para ambientes Docker ou de nuvem
     options.add_argument("--disable-dev-shm-usage")  # Impede erros de memória no container
-
-    # Usar o ChromeDriverManager para instalar o ChromeDriver
+    options.add_argument("--disable-software-rasterizer")
+    options.add_argument("--remote-debugging-port=9222")
+    options.binary_location = "/usr/bin/chromium-browser"  # Caminho do Chromium no Streamlit Cloud
+    
+    # Usar o ChromeDriverManager para instalar o ChromeDriver compatível
     service = Service(ChromeDriverManager().install())
     
     try:
@@ -169,11 +187,6 @@ modelo.to_excel(modelo_arquivo, index=False)
 
 # Upload de arquivo ou entrada manual
 arquivo = st.sidebar.file_uploader("Carregar arquivo XLSX", type="xlsx")
-
-#st.sidebar.header("Modelo do Arquivo XLSX")
-#st.sidebar.write("O arquivo XLSX deve ter as seguintes colunas: 'Localizacao' e 'Palavra_Chave'.")
-st.sidebar.write("Exemplo de formato do arquivo:")
-#st.sidebar.table(modelo)
 
 # Botão para download do arquivo
 with open(modelo_arquivo, "rb") as f:
